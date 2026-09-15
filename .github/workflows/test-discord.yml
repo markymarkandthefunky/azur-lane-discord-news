@@ -12,7 +12,24 @@ jobs:
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
         run: |
-          curl -f \
-            -H "Content-Type: application/json" \
-            -d '{"content":"**Azur Lane EN News**\nBot test successful! Future official news will appear here automatically."}' \
-            "$DISCORD_WEBHOOK_URL"
+          python3 - <<'PY'
+          import json
+          import os
+          import urllib.request
+
+          url = os.environ["DISCORD_WEBHOOK_URL"].strip()
+
+          data = json.dumps({
+              "content": "Azur Lane EN news bot test - setup successful!"
+          }).encode("utf-8")
+
+          request = urllib.request.Request(
+              url,
+              data=data,
+              headers={"Content-Type": "application/json"},
+              method="POST"
+          )
+
+          with urllib.request.urlopen(request, timeout=30) as response:
+              print("Discord responded with:", response.status)
+          PY
