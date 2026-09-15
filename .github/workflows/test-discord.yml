@@ -16,8 +16,13 @@ jobs:
           import json
           import os
           import urllib.request
+          import urllib.error
 
           url = os.environ["DISCORD_WEBHOOK_URL"].strip()
+
+          print("Webhook secret exists:", bool(url))
+          print("Webhook starts with https:", url.startswith("https://"))
+          print("Webhook length:", len(url))
 
           data = json.dumps({
               "content": "Azur Lane EN news bot test - setup successful!"
@@ -26,10 +31,18 @@ jobs:
           request = urllib.request.Request(
               url,
               data=data,
-              headers={"Content-Type": "application/json"},
+              headers={
+                  "Content-Type": "application/json",
+                  "User-Agent": "DiscordBot (https://github.com, 1.0)"
+              },
               method="POST"
           )
 
-          with urllib.request.urlopen(request, timeout=30) as response:
-              print("Discord responded with:", response.status)
+          try:
+              with urllib.request.urlopen(request, timeout=30) as response:
+                  print("SUCCESS - Discord returned:", response.status)
+          except urllib.error.HTTPError as e:
+              print("DISCORD HTTP ERROR:", e.code)
+              print("DISCORD RESPONSE:", e.read().decode("utf-8", errors="replace"))
+              raise
           PY
