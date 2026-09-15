@@ -4,8 +4,8 @@ import urllib.request
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
-# Azur Lane EN Twitter/X account through RSSHub
-FEED_URL = "https://rsshub.yfi.moe/twitter/user/AzurLane_EN/excludeReplies=1&excludeRetweets=1"
+# Official Azur Lane EN website RSS feed
+FEED_URL = "https://azurlane.yo-star.com/news/feed/"
 STATE_FILE = Path("last_seen.json")
 WEBHOOK_URL = os.environ["DISCORD_WEBHOOK_URL"]
 
@@ -40,7 +40,11 @@ def get_posts():
 
 def send_to_discord(post):
     message = {
-        "content": f"**Azur Lane EN**\n{post['title']}\n{post['link']}"
+        "content": (
+            f"**Azur Lane EN News**\n"
+            f"{post['title']}\n"
+            f"{post['link']}"
+        )
     }
 
     data = json.dumps(message).encode("utf-8")
@@ -62,9 +66,10 @@ def main():
     posts = get_posts()
 
     if not posts:
-        raise RuntimeError("The RSS feed returned no posts.")
+        raise RuntimeError("The official Azur Lane feed returned no posts.")
 
-    # First run: remember the newest post without flooding Discord.
+    # First successful run:
+    # remember the newest article without flooding Discord with old news.
     if not STATE_FILE.exists():
         STATE_FILE.write_text(
             json.dumps({"last_seen": posts[0]["id"]}, indent=2)
@@ -82,7 +87,8 @@ def main():
             break
         new_posts.append(post)
 
-    # Send oldest first if several appeared between checks.
+    # If several articles appeared between checks,
+    # send them to Discord oldest first.
     for post in reversed(new_posts):
         send_to_discord(post)
         print("Sent:", post["link"])
