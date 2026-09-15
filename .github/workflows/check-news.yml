@@ -1,0 +1,39 @@
+name: Check Azur Lane News
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "*/15 * * * *"
+
+permissions:
+  contents: write
+
+jobs:
+  check-news:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Get repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Check for new posts
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: python check_news.py
+
+      - name: Save last seen post
+        run: |
+          if [ -f last_seen.json ]; then
+            git config user.name "Azur Lane News Bot"
+            git config user.email "actions@github.com"
+            git add last_seen.json
+            if ! git diff --cached --quiet; then
+              git commit -m "Update last seen Azur Lane post"
+              git push
+            fi
+          fi
